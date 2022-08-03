@@ -38,7 +38,7 @@ class Regresion:
         h = self.hipotesis(x=x, theta=theta)
         return -np.sum(y*np.log(h) + (1-y)*np.log(1-h))/(m)
     
-    def optimize(self, theta = None, save = True):
+    def optimize(self, theta = None):
         if type(theta) == list:theta=np.array(theta)
         if type(theta) != np.ndarray: theta = self.theta
         _theta = np.array(theta)
@@ -46,23 +46,24 @@ class Regresion:
         result = fmin(
             self.cost,
             x0=_theta,
-            maxiter=400,
+            maxiter=400, #maximo de iteraciones
             full_output=True,
             disp=False,
             )
-        if save: self.theta = result[0]
-        # self.__perfomance__()
+        self.theta = result[0]
+        #return [costo, theta_optimo]
         return result[1], result[0]
     
     def predict(self, x, theta = None):
         if type(theta) == list:theta=np.array(theta)
         if type(theta) != np.ndarray: theta = self.theta
         prob = np.sum(self.hipotesis(x=x, theta=theta))
-        return [prob, 1] if prob >= .5 else [prob, 0]
+        return [prob, 1] if prob >= 0.5 else [prob, 0]
         # return 1 if prob >= .5 else 0
     
     def decision_boundary(self, x):
-
+        # retorna la prediccion de todos los x
+        #un arreglo
         def decision_boundary(prob):
             return 1 if prob >= .5 else 0
         
@@ -70,10 +71,10 @@ class Regresion:
         prediccion = self.hipotesis(x)
         return decision_boundary(prediccion)
 
-
     def perfomance(self):        
         prediction = np.reshape(self.decision_boundary(self.test_x).flatten(), (self.test_m, 1))
         result = np.hstack((self.test_y.T, prediction)).tolist()
+        # [resultado real, prediccion]
 
         self.true_positive = len(list(filter(lambda row: row[0] == 1. and row[1] == 1., result)))
         self.false_positive = len(list(filter(lambda row: row[0] == 0. and row[1] == 1., result)))
@@ -86,6 +87,7 @@ class Regresion:
             self.fmeasure
         ]
     
+    #@property es un decorador
     @property
     def precision(self):
         return self.true_positive/(self.true_positive + self.false_positive)
